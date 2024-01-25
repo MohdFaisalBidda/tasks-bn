@@ -7,7 +7,7 @@ const authenticate = (req, res, next) => {
     req.userId = decoded.userId;
     next();
   } catch (error) {
-    res.status(500).json({ error: "Unauthorized" });
+    res.status(500).json({ error: "Unauthorized Please Provide a jwt token!" });
   }
 };
 

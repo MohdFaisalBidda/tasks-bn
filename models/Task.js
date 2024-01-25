@@ -5,7 +5,7 @@ const taskSchema = mongoose.Schema(
     title: { type: String, required: true },
     description: { type: String, required: true },
     due_date: Date,
-    status: { type: String, enum: ["TODO", "IN_PROGRESS", "DONE"] },
+    status: { type: String, enum: ["TODO", "IN_PROGRESS", "DONE"],default:"TODO" },
     priority: { type: Number, enum: [0, 1, 2, 3] },
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     subTasks: [{ type: mongoose.Schema.Types.ObjectId, ref: "SubTask" }],

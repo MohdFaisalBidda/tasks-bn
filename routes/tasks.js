@@ -2,24 +2,46 @@ const express = require("express");
 const authenticate = require("../middleware/authenticate");
 const Task = require("../models/Task");
 const SubTask = require("../models/SubTask");
-const { parseISO, format, parse } = require("date-fns");
+const { format, parse } = require("date-fns");
+const User = require("../models/User");
 
 const router = express.Router();
 
 //Get all tasks
+// router.get("/all", authenticate, async (req, res) => {
+//   try {
+//     const tasks = await Task.find();
+//     // const tasks = await Task.find().populate("user");
+//     res.json(tasks);
+//   } catch (error) {
+//     res.status(500).json(error);
+//   }
+// });
+
+//Get all tasks
 router.get("/all", authenticate, async (req, res) => {
   try {
-    const tasks = await Task.find().populate("user");
+    const { priority, due_date, page = 1, limit = 2 } = req.query;
+    const filter = {};
+    if (priority) filter.priority = priority;
+    if (due_date)
+      filter.due_date = { $gte: parseISO(`${due_date}T00:00:00.000Z`) };
+
+    const tasks = await Task.find(filter)
+      .sort({ due_date: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+    // const tasks = await Task.find().populate("user");
     res.json(tasks);
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json(error);
   }
 });
 
 //create a task
 router.post("/new", authenticate, async (req, res) => {
   try {
-    const { title, description, due_date, status, user } = req.body;
+    const { title, description, due_date, status, priority, user } = req.body;
 
     const parsedDate = parse(due_date, "dd/MM/yyyy", new Date());
 
@@ -28,12 +50,15 @@ router.post("/new", authenticate, async (req, res) => {
       description,
       due_date: parsedDate,
       status,
-      user: user,
+      priority,
+      user,
     });
 
     const formattedCreatedAt = format(task.createdAt, "MM/dd/yyyy");
     const formattedUpdatedAt = format(task.updatedAt, "MM/dd/yyyy");
     const formattedDueDate = format(parsedDate, "MM/dd/yyyy");
+
+    await User.findByIdAndUpdate(user, { tasks: task._id });
 
     res.status(201).json({
       ...task.toObject(),
@@ -42,18 +67,18 @@ router.post("/new", authenticate, async (req, res) => {
       due_date: formattedDueDate,
     });
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json(error);
   }
 });
 
 //Get all sub tasks
 router.get("/subtasks", authenticate, async (req, res) => {
   try {
-    const { task_id } = req.query;
-    const subTasks = await SubTask.find({ task_id });
+    const subTasks = await SubTask.find();
+    // const subTasks = await SubTask.find().populate("task_id");
     res.json(subTasks);
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json(error);
   }
 });
 
@@ -62,9 +87,10 @@ router.post("/new-subtask", authenticate, async (req, res) => {
   try {
     const { task_id, title, description } = req.body;
     const subTask = await SubTask.create({ task_id, title, description });
+    await Task.findByIdAndUpdate(task_id, { subTasks: subTask._id.toString() });
     res.status(201).json(subTask);
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json(error);
   }
 });
 
@@ -72,14 +98,15 @@ router.post("/new-subtask", authenticate, async (req, res) => {
 router.patch("/:taskId", authenticate, async (req, res) => {
   try {
     const { due_date, status } = req.body;
+    const parsedDate = parse(due_date, "dd/MM/yyyy", new Date());
     const task = await Task.findByIdAndUpdate(
       req.params.taskId,
-      { due_date, status },
+      { due_date: parsedDate, status },
       { new: true }
     );
     res.json(task);
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json(error);
   }
 });
 
@@ -87,6 +114,10 @@ router.patch("/:taskId", authenticate, async (req, res) => {
 router.patch("/subtasks/:subtaskID", authenticate, async (req, res) => {
   try {
     const { status } = req.body;
+    if (status === 0 && status === 1 && status === "") {
+      res.json("Status is not valid");
+      return;
+    }
     const subtask = await SubTask.findByIdAndUpdate(
       req.params.subtaskID,
       { status },
@@ -94,7 +125,7 @@ router.patch("/subtasks/:subtaskID", authenticate, async (req, res) => {
     );
     res.json(subtask);
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json(error);
   }
 });
 
@@ -108,7 +139,7 @@ router.delete("/:taskId", authenticate, async (req, res) => {
     );
     res.json(task);
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json(error);
   }
 });
 
@@ -122,7 +153,7 @@ router.delete("/subtasks/:subtaskId", authenticate, async (req, res) => {
     );
     res.json(subTask);
   } catch (error) {
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(500).json(error);
   }
 });
 
