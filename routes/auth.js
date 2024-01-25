@@ -10,7 +10,7 @@ router.get("/users", async (req, res) => {
     // const users = await User.find().populate("tasks");
     res.status(200).json(users);
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json(error.message);
   }
 });
 
@@ -24,7 +24,7 @@ router.post("/register", async (req, res) => {
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
     res.status(201).json({ ...user._doc, token });
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json(error.message);
   }
 });
 

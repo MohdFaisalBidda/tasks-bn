@@ -14,11 +14,11 @@ const router = express.Router();
 //     // const tasks = await Task.find().populate("user");
 //     res.json(tasks);
 //   } catch (error) {
-//     res.status(500).json(error);
+//     res.status(500).json(error.message);
 //   }
 // });
 
-//Get all tasks
+//Get all tasks with filters and queries
 router.get("/all", authenticate, async (req, res) => {
   try {
     const { priority, due_date, page = 1, limit = 2 } = req.query;
@@ -34,7 +34,7 @@ router.get("/all", authenticate, async (req, res) => {
     // const tasks = await Task.find().populate("user");
     res.json(tasks);
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json(error.message);
   }
 });
 
@@ -67,7 +67,7 @@ router.post("/new", authenticate, async (req, res) => {
       due_date: formattedDueDate,
     });
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json(error.message);
   }
 });
 
@@ -78,7 +78,7 @@ router.get("/subtasks", authenticate, async (req, res) => {
     // const subTasks = await SubTask.find().populate("task_id");
     res.json(subTasks);
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json(error.message);
   }
 });
 
@@ -90,7 +90,7 @@ router.post("/new-subtask", authenticate, async (req, res) => {
     await Task.findByIdAndUpdate(task_id, { subTasks: subTask._id.toString() });
     res.status(201).json(subTask);
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json(error.message);
   }
 });
 
@@ -106,7 +106,7 @@ router.patch("/:taskId", authenticate, async (req, res) => {
     );
     res.json(task);
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json(error.message);
   }
 });
 
@@ -125,7 +125,7 @@ router.patch("/subtasks/:subtaskID", authenticate, async (req, res) => {
     );
     res.json(subtask);
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json(error.message);
   }
 });
 
@@ -139,7 +139,7 @@ router.delete("/:taskId", authenticate, async (req, res) => {
     );
     res.json(task);
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json(error.message);
   }
 });
 
@@ -153,7 +153,7 @@ router.delete("/subtasks/:subtaskId", authenticate, async (req, res) => {
     );
     res.json(subTask);
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json(error.message);
   }
 });
 
